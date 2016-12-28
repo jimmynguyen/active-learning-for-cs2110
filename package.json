@@ -1,0 +1,41 @@
+{
+  "name": "cs3312",
+  "version": "1.0.0",
+  "description": "Active Learning for CS 2110",
+  "dependencies": {
+    "angular": "^1.5.8",
+    "angular-animate": "^1.5.8",
+    "angular-aria": "^1.5.8",
+    "angular-cookies": "^1.5.8",
+    "angular-md5": "^0.1.10",
+    "angular-route": "^1.5.8",
+    "angular-toastr": "^2.1.1",
+    "bcrypt": "^0.8.7",
+    "bcryptjs": "^2.3.0",
+    "body-parser": "^1.15.2",
+    "bootstrap": "^3.3.7",
+    "connect": "^3.5.0",
+    "cors": "^2.8.1",
+    "express": "^4.14.0",
+    "jquery": "^3.1.0",
+    "jsonwebtoken": "^7.1.9",
+    "mysql": "^2.11.1",
+    "serve-static": "^1.11.1",
+    "zingchart": "^2.5.0",
+    "zingchart-angularjs": "^1.2.0"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-concat-css": "^0.3.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-cssmin": "^1.0.2",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-contrib-uglify": "^2.0.0",
+    "jshint-stylish": "^2.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.gatech.edu/jrodriguez79/CS3312---Active-Learning-for-2110.git"
+  },
+  "license": "ISC"
+}

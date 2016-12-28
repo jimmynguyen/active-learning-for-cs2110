@@ -1,0 +1,16 @@
+{
+  "curly"   : true,
+  "eqeqeq"  : true,
+  "undef"   : true,
+  "jquery"  : true,
+
+  // global variables
+  "globals": {
+    "angular"   : true,
+    "$"         : false,
+    "_"         : false,
+    "module"    : false,
+    "require"   : false,
+    "console"   : false
+  }
+}

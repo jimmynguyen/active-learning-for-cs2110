@@ -1,0 +1,587 @@
+<div ng-include src="'templates/partials/navbar.html'"></div>
+<div class="container">
+    <div class="col-md-3">
+        <ul class="nav nav-pills nav-stacked well-sm">
+            <li ng-class="{ active: isSet(1) }">
+                <a href ng-click="setTab(1)">Current Questions</a>
+            </li>
+            <li ng-class="{ active: isSet(2) }">
+                <a href ng-click="setTab(2)">Question Management</a>
+            </li>
+            <li ng-class="{ active: isSet(3) }">
+                <a href ng-click="setTab(3)">Class Administration</a>
+            </li>
+            <li ng-class="{ active: isSet(4) }">
+                <a href ng-click="setTab(4)">Student Performance</a>
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-9 vert-nav-border">
+        <div ng-show="isSet(1)">
+            <h2>Modules</h2>
+            <hr/>
+            <div ng-repeat="module in modules">
+                <h3 class="cursor-pointer" ng-click="toggleModule(module.module_id + 'active')"><span class="glyphicon glyphicon-triangle-right" id="module-span-{{ module.module_id + 'active' }}"></span>{{ module.module_id }}: {{ module.name }}</h3>
+                <table class="table table-striped" id="module-table-{{ module.module_id + 'active' }}" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Question
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cursor-pointer" ng-repeat="question in questions | filter:{ module_id: module.module_id }">
+                            <td ng-click="openQuestionModal(question, module)">
+                                {{ question.name }}
+                            </td>
+                            <td ng-click="openQuestionModal(question, module)">
+                                {{ question.content }}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-success" ng-click="openQuestionStatisticsModal(question, module)">
+                                    <span class="glyphicon glyphicon-stats"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="questionStatisticsModal" class="modal fade">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">
+                                {{ questionStatisticsModal.question.name }} [{{ questionStatisticsModal.module.name }}]
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    {{ questionStatisticsModal.question.content }}
+                                    <hr/>
+                                </div>
+                                <div class="col-md-12" ng-hide="questionStatisticsModal.sessions.length > 0">
+                                    No statistics available for this question
+                                </div>
+                                <div class="col-md-12" ng-show="questionStatisticsModal.sessions.length > 0">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th ng-repeat="response in questionStatisticsModal.sessions[0].responses">
+                                                    {{ response.content }}
+                                                    <span ng-show="response.is_correct" class="glyphicon glyphicon-ok"></span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="cursor-pointer" ng-repeat="session in questionStatisticsModal.sessions" ng-click="openQuestionStatisticsHistogramModal(session)">
+                                                <td ng-repeat="response in session.responses">
+                                                    {{ response.count }} / {{ session.total_count }}
+                                                </td>
+                                            </tr>
+                                            <tr class="cursor-pointer">
+                                                <th ng-repeat="total in questionStatisticsModal.totals track by $index" ng-click="openQuestionStatisticsHistogramModal(null)">
+                                                    {{ total }} / {{ questionStatisticsModal.totalsTotal }}
+                                                </th>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <div id="questionStatisticsHistogramModal" class="modal fade">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">
+                                {{ questionStatisticsModal.question.name }} [{{ questionStatisticsModal.module.name }}]
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <zingchart id="myChart" zc-json="myJson" zc-height="500" class="col-md-12"></zingchart>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <div id="questionModal" class="modal fade">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" ng-disabled="questionModal.timer.isRunning">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">
+                                {{ questionModal.question.name }} [{{ questionModal.module.name }}]
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    {{ questionModal.question.content }}
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="row">
+                                        <div class="col-md-12 margin-top-20px">
+                                            <ul class="list-group">
+                                                <li ng-repeat="answer in questionModal.answers" class="list-group-item btn-default" ng-class="{'btn-success': questionModal.timer.isStopped && answer.is_correct}">
+                                                    <div class="row">
+                                                        <div class="text-left col-md-10">
+                                                            <strong>{{ getAnswerChoiceLetter($index) }}:</strong> {{ answer.content }}
+                                                        </div>
+                                                        <div class="text-right col-md-2">
+                                                            <strong ng-show="answer.count !== null && answer.count !== undefined">
+                                                                {{ calculatePercentage(answer.count, questionModal.totalResponseCount) }} %
+                                                                <br/>
+                                                                {{ answer.count }} / {{ questionModal.totalResponseCount }}
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="questionModal-timer" class="row">
+                                <div class="col-md-12 text-center margin-top-20px">
+                                    <div id="countdown" style="font-size:50px">
+                                        <input type="text" id="timer-minutes-ten" class="text-center" style="width:50px" value="0" maxLength="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+                                        <input type="text" id="timer-minutes-one" class="text-center" style="width:50px" value="5" maxLength="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" /> :
+                                        <input type="text" id="timer-seconds-ten" class="text-center" style="width:50px" value="0" maxLength="1" onkeypress="return event.charCode >= 48 && event.charCode <= 53" />
+                                        <input type="text" id="timer-seconds-one" class="text-center" style="width:50px" value="0" maxLength="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+                                    </div>
+                                </div>
+                                <div class="col-md-12 text-center margin-top-20px">
+                                    <button type="button" class="btn btn-success" ng-click="startTimer()" ng-disabled="questionModal.timer.isRunning">
+                                        Start
+                                    </button>
+                                    <button type="button" class="btn btn-info" ng-click="addFifteenSeconds()" ng-disabled="!questionModal.timer.isRunning">
+                                        +15s
+                                    </button>
+                                    <button type="button" class="btn btn-warning" ng-click="minusFifteenSeconds()" ng-disabled="!questionModal.timer.isRunning">
+                                        -15s
+                                    </button>
+                                    <button type="button" class="btn btn-danger" ng-click="stopTimer()" ng-disabled="!questionModal.timer.isRunning">
+                                        Stop
+                                    </button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" class="close" aria-label="Close" ng-disabled="questionModal.timer.isRunning">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="questionModal-answer" class="row">
+                                <div class="col-md-12">
+                                    <h5><strong>Explanation</strong></h5>
+                                    {{ questionModal.question.explanation }}
+                                </div>
+                                <div class="col-md-12 text-center margin-top-20px">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" class="close" aria-label="Close" ng-disabled="questionModal.timer.isRunning">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+        <!-- /.modal -->
+        <!-- /Tab 1 -->
+        <div ng-show="isSet(2)">
+            <h2>Question Management</h2>
+            <hr />
+            <div ng-repeat="module in modules">
+                <h3 class="cursor-pointer" ng-click="toggleModule(module.module_id)"><span class="glyphicon glyphicon-triangle-right" id="module-span-{{ module.module_id }}"></span>{{ module.module_id }}: {{ module.name }}</h3>
+                <table class="table table-striped" id="module-table-{{ module.module_id }}" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>
+                            </th>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Question
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cursor-pointer" ng-repeat="question in questions | filter:{ module_id: module.module_id } track by $index">
+                            <td>
+                                <button class="btn btn-sm btn-xs btn-danger" ng-click="deleteQuestion(question)">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                            </td>
+                            <td ng-click="openCrudModal(question, module)">
+                                {{ question.name }}
+                            </td>
+                            <td ng-click="openCrudModal(question, module)">
+                                {{ question.content }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="42">
+                                <button class="btn btn-success" ng-click="openAddModal(module)">
+                                <span class="glyphicon glyphicon-plus">&nbsp;</span>Add Question
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="crudModal" class="modal fade">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h3 class="modal-title">
+                            {{ crudModal.title }}
+                        </h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label>Title</label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-edit"></span>
+                                    </span>
+                                    <input type="text" class="form-control" value="{{ crudModal.question.name }}" ng-blur="updateQuestion($event, 'name')" />
+                                </div>
+                                <label>Content</label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-edit"></span>
+                                    </span>
+                                    <input type="text" class="form-control" id="" value="{{ crudModal.question.content }}" ng-blur="updateQuestion($event, 'content')" />
+                                </div>
+                                <label>Explanation</label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-edit"></span>
+                                    </span>
+                                    <textarea class="form-control" rows="3" required ng-blur="updateQuestion($event, 'explanation')">{{ crudModal.question.explanation }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-12 margin-top-20px">
+                                        <label>Answers</label>
+                                        <ul class="list-group">
+                                            <li ng-repeat="answer in crudModal.answers" class="list-group-item text-left">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        <span class="glyphicon"
+                                                            ng-class="{'glyphicon-remove': !answer.is_correct, 'glyphicon-ok': answer.is_correct }"></span>
+                                                    </span>
+                                                    <span class="input-group-addon">
+                                                        <input type="radio" name="correct" id="is-correct-{{ answer.answer_id }}" ng-checked=" {{ answer.is_correct }}"
+                                                            ng-model="radioModel"
+                                                            ng-click="updateAnswerIsCorrect(answer)">
+                                                    </span>
+                                                    <input type="text" class="form-control" id="content-{{ answer.answer_id }}" value=" {{ answer.content }}" ng-blur="updateAnswerContent($event, answer)">
+                                                </div>
+                                            </li>
+                                            <li class="list-group-item text-left">
+                                                <!-- Need to deal with adding an answer different. -->
+                                                <div class="input-group">
+                                                    <span class="input-group-btn">
+                                                        <button class="btn btn-primary btn-block" ng-click="addAnswer()">
+                                                            <span class="glyphicon glyphicon-plus"></span>
+                                                        </button>
+                                                    </span>
+                                                    <span class="input-group-addon">
+                                                        <input type="radio" name="correct"
+                                                            id="new-answer-is-correct">
+                                                    </span>
+                                                    <input type="text" class="form-control" value="" id="new-answer-content">
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <button type="button" class="btn btn-success" ng-click="" data-dismiss="modal">
+                                            Save and Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /Tab 2 -->
+        <div ng-show="isSet(3)">
+            <h2>Class Administration</h2>
+            <hr />
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            GT Username
+                        </th>
+                        <th>
+                            First Name
+                        </th>
+                        <th>
+                            Last Name
+                        </th>
+                        <th>
+                            Email
+                        </th>
+                        <th>
+                            User Type
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="cursor-pointer" ng-repeat="user in users" ng-click="openEditUserModal(user)">
+                        <td>
+                            {{ user.gt_username }}
+                        </td>
+                        <td>
+                            {{ user.first_name }}
+                        </td>
+                        <td>
+                            {{ user.last_name }}
+                        </td>
+                        <td>
+                            {{ user.email }}
+                        </td>
+                        <td>
+                            {{ user.user_type }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div id="editUserModal" class="modal fade">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">
+                                Edit User [{{ editUserModal.user.first_name }} {{ editUserModal.user.last_name }}]
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="gt_username">
+                                            GT Username
+                                        </label>
+                                        <input id="gt_username" type="text" class="form-control" ng-model="editUserModal.user.gt_username" readonly />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="first_name">
+                                            First Name
+                                        </label>
+                                        <input id="first_name" type="text" class="form-control" ng-model="editUserModal.user.first_name" readonly />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="last_name">
+                                            Last Name
+                                        </label>
+                                        <input id="last_name" type="text" class="form-control" ng-model="editUserModal.user.last_name" readonly />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email">
+                                            Email
+                                        </label>
+                                        <input id="email" type="email" class="form-control" ng-model="editUserModal.user.email" readonly />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user_type">
+                                            User Type
+                                        </label>
+                                        <br/>
+                                        <label class="form-check-inline margin-right-20px font-weight-normal" ng-repeat="userType in userTypes">
+                                            <input type="radio" class="form-check-input" name="editUserModalUserType" value="userType.user_type_id" ng-model="editUserModal.user.user_type_id" ng-checked="editUserModal.user.user_type_id === userType.user_type_id" ng-disabled="editUserModal.user.user_type_id !== userType.user_type_id">
+                                            {{ userType.type }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success" ng-click="changeToInstructor(editUserModal.user.user_id)" ng-disabled="isInvalid(editUserModal.user.gt_username) || isInvalid(editUserModal.user.first_name) || isInvalid(editUserModal.user.last_name) || isInvalid(editUserModal.user.email)">
+                                Change to Instructor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- <button type="button" class="btn btn-success" ng-click="openAddUserModal()">
+                Add User
+            </button>
+            <div id="addUserModal" class="modal fade">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title">
+                                Add User
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="gt_username">
+                                            GT Username
+                                        </label>
+                                        <input id="gt_username" type="text" class="form-control" ng-model="addUserModal.user.gt_username" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="first_name">
+                                            First Name
+                                        </label>
+                                        <input id="first_name" type="text" class="form-control" ng-model="addUserModal.user.first_name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="last_name">
+                                            Last Name
+                                        </label>
+                                        <input id="last_name" type="text" class="form-control" ng-model="addUserModal.user.last_name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email">
+                                            Email
+                                        </label>
+                                        <input id="email" type="email" class="form-control" ng-model="addUserModal.user.email" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user_type">
+                                            User Type
+                                        </label>
+                                        <br/>
+                                        <label class="form-check-inline margin-right-20px font-weight-normal" ng-repeat="userType in userTypes">
+                                            <input type="radio" class="form-check-input" name="addUserModalUserType" value="userType.user_type_id" ng-model="addUserModal.user.user_type_id">
+                                            {{ userType.type }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success" ng-click="addUser()" ng-disabled="isInvalid(addUserModal.user.gt_username) || isInvalid(addUserModal.user.first_name) || isInvalid(addUserModal.user.last_name) || isInvalid(addUserModal.user.email) || isInvalid(addUserModal.user.user_type_id)">
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+        <!-- /Tab 3 -->
+        <div ng-show="isSet(4)">
+            <h2>Student Performance</h2>
+            <hr />
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            GT Username
+                        </th>
+                        <th>
+                            First Name
+                        </th>
+                        <th>
+                            Last Name
+                        </th>
+                        <th>
+                            % Correct
+                        </th>
+                        <th>
+                            Correct / Possible
+                        </th>
+                    </tr>
+                </thead>
+                <tbody ng-repeat="user in users" ng-if="user.user_type.toLowerCase() === 'student'">
+                    <tr class="cursor-pointer" ng-click="toggleStudentDetailedStatistics(user.user_id)">
+                        <td>
+                            {{ user.gt_username }}
+                        </td>
+                        <td>
+                            {{ user.first_name }}
+                        </td>
+                        <td>
+                            {{ user.last_name }}
+                        </td>
+                        <td>
+                            {{ user.statistics.percentCorrect }} %
+                        </td>
+                        <td>
+                            {{ user.statistics.correct }} / {{ user.statistics.total }}
+                        </td>
+                    </tr>
+                    <tr id="studentPerformance-detailedStatistics-{{ user.user_id }}" style="display:none;">
+                        <td colspan="5">
+                            <div ng-repeat="module in modules">
+                                <h5 class="cursor-pointer" ng-click="toggleStudentPerformanceModule(module.module_id + 'active')"><span class="glyphicon glyphicon-triangle-right" id="studentPerformance-module-span-{{ module.module_id + 'active' }}"></span>{{ module.module_id }}: {{ module.name }}</h5>
+                                <table class="table table-striped" id="studentPerformance-module-table-{{ module.module_id + 'active' }}" style="display:none;">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Name
+                                            </th>
+                                            <th>
+                                                % Correct
+                                            </th>
+                                            <th>
+                                                Correct / Possible
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="cursor-pointer" ng-repeat="question in questions | filter:{ module_id: module.module_id }">
+                                            <td>
+                                                {{ question.name }}
+                                            </td>
+                                            <td>
+                                                {{ getPercentCorrectByQuestionByStudent(question.question_id, user) }}
+                                            </td>
+                                            <td>
+                                                {{ getCorrectOutOfPossibleByQuestionByStudent(question.question_id, user) }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- /Tab 4 -->
+    </div>
+</div>
+<!-- /container -->

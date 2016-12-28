@@ -1,0 +1,222 @@
+<div ng-include src="'templates/partials/navbar.html'"></div>
+
+<div class="container" ng-controller="UserViewController">
+    <div class="row">
+        <div class="col-md-3">
+            <ul class="nav nav-pills nav-stacked well-sm">
+                <li ng-class="{ active: isSet(1) }">
+                    <a href ng-click="setTab(1)">Active Questions</a>
+                </li>
+                <li ng-class="{ active: isSet(2) }">
+                    <a href ng-click="setTab(2)">Profile</a>
+                </li>
+                <li ng-class="{ active: isSet(3) }">
+                    <a href ng-click="setTab(3)">Past Questions</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-9 vert-nav-border">
+            <div ng-show="isSet(1)">
+                <h2>Active Questions</h2>
+                <hr />
+                <p ng-hide="sessions">Searching for an active question...</p>
+                <table class="table table-striped table-responsive table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Question
+                            </th>
+                            <th>
+                                Answers
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cursor-pointer" ng-repeat="session in sessions" ng-click="openQuestionModal(session)">
+                            <td>
+                                {{ session.question.name }}
+                            </td>
+                            <td>
+                                {{ session.question.content }}
+                            </td>
+                            <td ng-repeat="answer in session.answers" ng-class="{ 'bg-primary': session.selectedAnswer === answer.answer_id }">
+                                {{ answer.content }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="questionModal" class="modal fade">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title">
+                                    {{ questionModal.question.name }} [{{ questionModal.module.name }}]
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ questionModal.question.content }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 text-center margin-top-20px">
+                                        <ul class="list-group">
+                                            <li ng-repeat="answer in questionModal.answers" class="list-group-item text-left btn-default" ng-click="submitAnswer(answer)">
+                                                <strong>{{ getAnswerChoiceLetter($index) }}:</strong> {{ answer.content }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+                <!-- /.modal -->
+            </div>
+            <!-- /.tab -->
+            <div ng-show="isSet(2)">
+                <h2>Profile</h2>
+                <hr />
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <p class="h3"> {{ user.first_name }} {{ user.last_name }}</p>
+                    </div>
+                    <div class="panel-body">
+                        <p>Welcome, {{ user.first_name }}.</p>
+                    </div>
+                </div>
+                <h2>Performance</h2>
+                <hr />
+                <h3>Overall</h3>
+                <p> {{ (stats.correct / stats.total) * 100 | number: 2 }}% correct.</p>
+                <h3>By Question</h3>
+                <table class="table table-striped table-responsive table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                            </th>
+                            <th>
+                                Question Name
+                            </th>
+                            <th>
+                                Question Content
+                            </th>
+                            <th>
+                                Correct Answer
+                            </th>
+                            <th>
+                                Your Answer
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody ng-repeat="response in responses">
+                        <tr class="cursor-pointer" ng-click="showExplanation(response)">
+                            <td>
+                                <span ng-class="{ 'glyphicon glyphicon-triangle-right': isVisible(response), 'glyphicon glyphicon-triangle-bottom': !isVisible(response) }"></span>
+                            </td>
+                            <td>
+                                {{ response.question_name }}
+                            </td>
+                            <td>
+                                {{ response.question_content }}
+                            </td>
+                            <td>
+                                {{ response.correct_answer_content }}
+                            </td>
+                            <td ng-class="{'bg-success': response.correct, 'bg-danger': !response.correct}">
+                                {{ response.user_answer_content }}
+                            </td>
+                        </tr>
+                        <tr id="explanation-{{ getExplanationId(response) }}" style="display: none">
+                            <td>
+                            </td>
+                            <td colspan="42">
+                                <b>Explanation</b>
+                                <p>{{ response.question_explanation }}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div ng-show="isSet(3)">
+                <h2>Past Questions</h2>
+                <hr />
+                <table class="table table-striped table-responsive table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Question
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cursor-pointer" ng-repeat="question in pastQuestions" ng-click="openPastQuestionModal(question)">
+                            <td>
+                                {{ question.question.name }}
+                            </td>
+                            <td>
+                                {{ question.question.content }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="pastQuestionModal" class="modal fade">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title">
+                                    {{ pastQuestionModal.question.name }} [{{ pastQuestionModal.module.name }}]
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ pastQuestionModal.question.content }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 text-center margin-top-20px">
+                                        <ul class="list-group">
+                                            <li ng-repeat="answer in pastQuestionModal.answers" class="list-group-item text-left btn-default" ng-class="{'btn-success': (pastQuestionModal.chosen_answer > -1) && (answer.answer_id === pastQuestionModal.correct_answer_id), 'btn-danger': (pastQuestionModal.chosen_answer === answer.answer_id) && (answer.answer_id !== pastQuestionModal.correct_answer_id)}" ng-click="checkAnswer(answer)">
+                                                <strong>{{ getAnswerChoiceLetter($index) }}:</strong> {{ answer.content }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="row" ng-hide="pastQuestionModal.chosen_answer < 0">
+                                    <div class="col-md-10">
+                                        <h5><strong>Explanation</strong></h5>
+                                        {{ pastQuestionModal.question.explanation }}
+                                    </div>
+                                    <div class="col-md-12 text-center margin-top-20px">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal" class="close" aria-label="Close">
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+                <!-- /.modal -->
+            </div>
+        </div>
+    </div>
+</div>

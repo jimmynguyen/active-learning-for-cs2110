@@ -1,0 +1,74 @@
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+.background {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: -10;
+    display: block;
+    width: 1600px;
+    height: 1200px;
+    background-image: url("../templates/img/ga-tech-campus-aerial.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    -webkit-filter: blur(3px);
+    -moz-filter: blur(3px);
+    -o-filter: blur(3px);
+    -ms-filter: blur(3px);
+    filter: blur(3px);
+}
+
+.well {
+    margin-top: 20px;
+}
+
+.foreground {
+    z-index: 9999;
+    color: #fefefe;
+    background: rgba(0, 0, 0, 0);
+}
+
+.startup-border {
+    border: 6px solid;
+    border-radius: 10px;
+    border-color: white;
+}
+
+h1 {
+    text-align: center;
+}
+
+.darken {
+    background: rgba(0, 0, 0, 0.00);
+}
+
+.overlay {
+    z-index: -9;
+    background: rgba(0, 0, 0, 0.30);
+    width: inherit;
+    height: inherit;
+}
+
+.vertical-align {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+/* button recolor */
+.nav-pills > li.active > a, .btn-primary {
+    background-color: #6C6C6C !important;
+    border-color: #6C6C6C !important;
+    border-radius: 25px;
+}
+
+.vert-nav-border {
+    border-left: 1px solid;
+    border-color: #6c6c6c;
+    min-height: 100%;
+    height: 100%;
+}
